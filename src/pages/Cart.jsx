@@ -1,129 +1,124 @@
 import React, { useState, useEffect } from "react";
 import "../styles/Cart.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faTrash, faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
 import emptyBox from "../images/empty-box.png";
 import { useNavigate } from "react-router-dom";
-import '../styles/Cart.css';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const Cart = () => {
   const [cart, setCart] = useState([]);
   const [deliveryInstructions, setDeliveryInstructions] = useState("");
-  const profileToken = localStorage.getItem('token');
+  const profileToken = localStorage.getItem("token");
+  const totalAmount = cart.reduce((total, item) => total + item.book.price * item.quantity, 0);
+
   const navigate = useNavigate();
 
+  // ✅ Fetch Cart Items
   useEffect(() => {
-    const getCartItems = async () => {
+    const fetchCartItems = async () => {
+      if (!profileToken) return;
+
       try {
-        const token = localStorage.getItem("token");
-        const response = await fetch("http://localhost:8080/api/cart/get", {
+        const response = await fetch("http://localhost:8080/api/cart", {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${profileToken}`,
           },
         });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch cart data");
-        }
+        if (!response.ok) throw new Error("Failed to fetch cart data");
 
         const data = await response.json();
-        setCart(data.cartItems || []);
+        setCart(data.cart || []);
         setDeliveryInstructions(data.deliveryInstructions || "");
       } catch (error) {
         console.error("Error fetching cart data:", error.message);
       }
     };
 
-    getCartItems();
-  }, []);
+    fetchCartItems();
+  }, [profileToken]);
 
-  const handleQuantityChange = async (event, itemId, newQuantity) => {
+  // ✅ Remove an Item from Cart
+  const handleDeleteItem = async (bookId) => {
+    window.location.reload();
     try {
-      event.preventDefault();
+      const response = await fetch(`http://localhost:8080/api/cart/remove/${bookId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${profileToken}` },
+      });
+  
+      if (!response.ok) throw new Error("Failed to remove item");
+  
+      // ✅ Update state so UI reflects changes instantly
+      setCart((prevCart) => prevCart.filter((item) => item.book._id !== bookId));
+  
+      toast.success("Item removed from cart");
+    } catch (error) {
+      console.error("Error deleting item:", error.message);
+      toast.error("Failed to remove item");
+    }
+  };
+  
 
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `http://localhost:8080/api/cart/update/${itemId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ quantity: newQuantity }),
-        }
+  // ✅ Update Quantity of Item
+  const handleUpdateQuantity = async (bookId, newQuantity) => {
+    window.location.reload();
+    if (newQuantity < 1) return; // Prevent quantity below 1
+  
+    try {
+      const response = await fetch("http://localhost:8080/api/cart/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${profileToken}`,
+        },
+        body: JSON.stringify({ bookId, quantity: newQuantity }),
+      });
+  
+      if (!response.ok) throw new Error("Failed to update quantity");
+  
+      // ✅ Update state correctly so the UI reflects changes
+      setCart((prevCart) =>
+        prevCart.map((item) =>
+          item.book._id === bookId ? { ...item, quantity: newQuantity } : item
+        )
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to update quantity");
-      }
-
-      const updatedCart = await response.json();
-      setCart(updatedCart.cartItems || []);
+  
+      toast.success("Quantity updated");
     } catch (error) {
       console.error("Error updating quantity:", error.message);
+      toast.error("Failed to update quantity");
     }
-    window.location.reload();
   };
+  
 
+  // ✅ Handle Checkout
   const handleCheckout = async () => {
     try {
-      const token = localStorage.getItem("token");
+      if (!profileToken) {
+        toast.error("Please sign in to proceed.");
+        return;
+      }
+
       const response = await fetch("http://localhost:8080/api/cart/proceed-to-checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${profileToken}`,
         },
-        body: JSON.stringify({ deliveryInstructions }), // Ensure deliveryInstructions is included
+        body: JSON.stringify({ deliveryInstructions }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to checkout");
-      }
+      if (!response.ok) throw new Error("Checkout failed");
 
-      const data = await response.json();
-      console.log(data);
-      navigate('/create-order');
+      toast.success("Proceeding to checkout...");
+      navigate("/create-order");
     } catch (error) {
       console.error("Error during checkout:", error.message);
-    }
-  };
-
-  const handleDeleteItem = async (itemId) => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `http://localhost:8080/api/cart/remove-from-cart/${itemId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to delete item");
-      }
-
-      const updatedCart = await response.json();
-      setCart(updatedCart.cartItems || []);
-    } catch (error) {
-      console.error("Error deleting item:", error.message);
-    }
-    window.location.reload();
-  };
-
-  const handleCart = () => {
-    if (profileToken == null) {
-      toast.error("Please sign in");
-      console.log("Please sign in");
-    } else {
-      handleCheckout();
+      toast.error("Checkout failed");
     }
   };
 
@@ -146,34 +141,43 @@ const Cart = () => {
                     />
                     <span className="title-top">
                       <h6 style={{ width: "100px" }}>{item.book.title}</h6>
-                      <h6>₹ {item.price}</h6>
-                      <select
-                        name="quantity"
-                        id="quantity"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          handleQuantityChange(
-                            e,
-                            item._id,
-                            parseInt(e.target.value)
-                          )
-                        }
-                      >
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((qty) => (
-                          <option key={qty} value={qty}>
-                            {qty}
-                          </option>
-                        ))}
-                      </select>
+                      <h6>₹ {item.book.price}</h6>
+
+                      {/* ✅ Quantity Update Controls */}
+                      <div className="quantity-controls">
+                        <FontAwesomeIcon
+                        className="quantity-btn"
+                          icon={faMinus}
+                          size="1x"
+                          onClick={() => handleUpdateQuantity(item.book._id, item.quantity - 1)}
+                          style={{ cursor: "pointer", color: "black" }}
+                        />
+                        &nbsp;&nbsp;
+                        <span>{item.quantity}</span>
+                        &nbsp;&nbsp;
+                        <FontAwesomeIcon
+                        className="quantity-btn"
+                          icon={faPlus}
+                          size="1x"
+                          onClick={() => handleUpdateQuantity(item.book._id, item.quantity + 1)}
+                          style={{ cursor: "pointer", color: "black" }}
+                        />
+                      </div>
+
                       <span
                         style={{
                           display: "flex",
-                          justifyContent: "flex-start",
+                          alignItems: "center",
                           gap: "10px",
                         }}
                       >
-                        <h6>₹ {item.price * item.quantity}</h6>
-                        <FontAwesomeIcon icon={faTrash} size="1x" onClick={() => handleDeleteItem(item._id)} />
+                        <h6>₹ {item.book.price * item.quantity}</h6>
+                        <FontAwesomeIcon
+                          icon={faTrash}
+                          size="1x"
+                          onClick={() => handleDeleteItem(item.book._id)}
+                          style={{ cursor: "pointer", color: "red" }}
+                        />
                       </span>
                     </span>
                   </div>
@@ -183,29 +187,24 @@ const Cart = () => {
               <img src={emptyBox} className="empty-box" alt="Empty Cart" />
             )}
           </div>
+
+          {/* ✅ Order Summary */}
           {cart.length > 0 && (
             <div className="order">
               <h5>Order Summary</h5>
               <div className="order-details">
                 <h5>Amount Payable:</h5>
-                <h5>
-                  ₹{" "}
-                  {cart.reduce(
-                    (total, item) => total + item.price * item.quantity,
-                    0
-                  )}
-                </h5>
+                <h5>₹ {totalAmount}</h5>
               </div>
               <div className="order-details">
                 <h5>(includes GST)</h5>
               </div>
               <hr />
               <div className="order-details">
-                <h5>Delivery instructions</h5>
+                <h5>Delivery Instructions</h5>
               </div>
               <textarea
                 name="deliveryInstructions"
-                id="deliveryInstructions"
                 cols="30"
                 rows="7"
                 style={{
@@ -215,7 +214,7 @@ const Cart = () => {
                 }}
                 value={deliveryInstructions}
                 onChange={(e) => setDeliveryInstructions(e.target.value)}
-              ></textarea>
+              />
               <button
                 style={{
                   width: "100%",
@@ -223,9 +222,9 @@ const Cart = () => {
                   backgroundColor: "black",
                   color: "white",
                   border: "none",
-                  marginTop: '10px'
+                  marginTop: "10px",
                 }}
-                onClick={handleCart}
+                onClick={handleCheckout}
               >
                 Proceed To Checkout
               </button>

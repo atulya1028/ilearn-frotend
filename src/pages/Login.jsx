@@ -39,6 +39,7 @@ export const Login = () => {
       if (data.token) {
         toast.success("Login Successful");
         localStorage.setItem("token", data.token);
+        console.log("token------", data.token);
         navigate("/",{state: {refreshHandler:true}});
         window.location.reload();
         window.location.reload();

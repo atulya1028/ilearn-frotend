@@ -10,7 +10,6 @@ import { Login } from './pages/Login';
 import Cart from './pages/Cart';
 import { CreateOrder } from './pages/CreateOrder';
 import Favorite  from './pages/Favorite';
-import {Payment} from './pages/Payment';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import SignUp from './pages/SignUp';
@@ -37,7 +36,6 @@ function App() {
           
         </Route>
         <Route path="/create-order" element={<CreateOrder />} />
-        <Route path='/payment' element={<Payment/>}/>
         <Route path='/forgot-password' element={<ForgotPassword/>}/>
         <Route path="/reset-password/:token" element={<ResetPassword/>} />
         <Route path='/login' element={<Login/>}/>

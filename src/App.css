@@ -60,6 +60,7 @@ body{
 
 
 .head{
+  padding-left: 10px;
   display: flex !important;
   flex-direction: row !important;
   justify-content: space-between !important;
@@ -68,6 +69,7 @@ body{
 
 @media screen and (min-width:360px) {
   .head{
+    padding-left: 10px;
       display: flex !important;
       flex-direction: row !important;
       justify-content: space-between !important;
@@ -78,6 +80,7 @@ body{
 
 @media screen and (min-width:375px) {
   .head{
+    padding-left: 10px;
       display: flex !important;
       flex-direction: row !important;
       justify-content: space-between !important;
@@ -86,6 +89,7 @@ body{
 }
 @media screen and (min-width:390px) {
   .head{
+    padding-left: 10px;
       display: flex !important;
       flex-direction: row !important;
       justify-content: space-between !important;
@@ -95,6 +99,7 @@ body{
 
 @media screen and (min-width:412px) {
   .head{
+    padding-left: 10px;
       display: flex !important;
       flex-direction: row !important;
       justify-content: space-between !important;
@@ -104,6 +109,7 @@ body{
 
 @media screen and (min-width:414px) {
   .head{
+    padding-left: 10px;
       display: flex !important;
       flex-direction: row !important;
       justify-content: space-between !important;
@@ -112,6 +118,7 @@ body{
 }
 @media screen and (min-width:430px) {
   .head{
+    padding-left: 10px;
       display: flex !important;
       flex-direction: row !important;
       justify-content: space-between !important;
@@ -121,6 +128,7 @@ body{
 
 @media screen and (min-width:768px) {
   .head{
+    padding-left: 10px;
       display: flex !important;
       justify-content: space-between !important;
       align-items: center !important;
@@ -128,6 +136,7 @@ body{
 }
 @media screen and (min-width:820px) {
   .head{
+    padding-left: 10px;
       display: flex !important;
       flex-direction: row !important;
       justify-content: space-between !important;
@@ -136,6 +145,7 @@ body{
 }
 @media screen and (min-width:915px) {
   .head{
+    padding-left: 10px;
       display: flex !important;
       flex-direction: row !important;
       justify-content: space-between !important;
@@ -144,6 +154,7 @@ body{
 }
 @media screen and (min-width:1440px) {
   .head{
+    padding-left: 10px;
       display: flex !important;
       flex-direction: row !important;
       justify-content: space-between !important;
@@ -799,8 +810,8 @@ body{
 @media screen and (min-width:768px) {
   .cart-items-count {
     position: absolute !important;
-    top: 112px !important;
-    right: 30px !important;
+    top: 60px !important;
+    right: 77px !important;
     background-color: red !important;
     color: white !important;
     font-size: 12px !important;
@@ -955,8 +966,8 @@ body{
 @media screen and (min-width:768px){
   .favorite-count {
     position: absolute !important;
-    top: 109px !important;
-    right: 86px !important;
+    top: 66px !important;
+    right: 137px !important;
     background-color: red !important;
     color: white !important;
     font-size: 12px !important;
@@ -1595,8 +1606,8 @@ body{
 }
 
 .add-cart:hover{
- background-color: black;
- color: white;
+ background-color: black !important;
+ color: white !important;
 }
 
    .book-icon{
@@ -1604,4 +1615,10 @@ body{
     height: 200px !important;
    }
 
+   .quantity-btn {
+    border: 1px solid black;
+    padding: 2px;
+    border-radius: 5px;
+   }
+  
 

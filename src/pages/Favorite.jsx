@@ -5,40 +5,49 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 const Favorite = () => {
   const [favorites, setFavorites] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/book/favorites', {
+        const response = await fetch('http://localhost:8080/favorite/favorites', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`, // Assuming you store the JWT token in localStorage
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch favorites');
+          throw new Error(`Failed to fetch favorites: ${response.statusText}`);
         }
 
         const data = await response.json();
+        console.log('Fetched Favorites:', data); // Debugging
+
+        if (!Array.isArray(data.favorites)) {
+          throw new Error('Invalid response format: Expected an array');
+        }
+
         setFavorites(data.favorites);
       } catch (error) {
         console.error(error);
-        // Handle error, show message to the user, etc.
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchFavorites();
   }, []);
 
-  const handleRemoveFavorite = async (favoriteId) => {
+  const handleRemoveFavorite = async (bookId) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/book/remove-from-favorites/${favoriteId}`, {
+      const response = await fetch(`http://localhost:8080/favorite/remove-from-favorites/${bookId}`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`, // Assuming you store the JWT token in localStorage
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
 
@@ -46,31 +55,45 @@ const Favorite = () => {
         throw new Error('Failed to remove favorite');
       }
 
-      // Remove the favorite from the local state
-      setFavorites((prevFavorites) =>
-        prevFavorites.filter((favorite) => favorite._id !== favoriteId)
-      );
+      // Update state after removing a favorite
+      setFavorites((prevFavorites) => prevFavorites.filter((fav) => fav.bookId._id !== bookId));
     } catch (error) {
       console.error(error);
-      // Handle error, show message to the user, etc.
     }
     window.location.reload();
   };
 
-
   return (
     <div className='favorite'>
       <div style={{ margin: '50px' }} className='data'>
-        {favorites.map((favorite) => (
-          <div key={favorite._id}>
-            <img src={`http://localhost:8080/${favorite.image}`} alt={favorite.title} width={100} height={150} />
-            <h4 style={{fontSize:'20px'}}>{favorite.title}</h4>
-            <span className='flex-display'>
-              <button className='add-to-cart'>Add To Bag</button>
-              <FontAwesomeIcon icon={faTrash} onClick={()=>handleRemoveFavorite(favorite._id)}/>
-            </span>
-          </div>
-        ))}
+        {loading ? (
+          <p>Loading favorites...</p>
+        ) : error ? (
+          <p style={{ color: 'red' }}>{error}</p>
+        ) : favorites.length === 0 ? (
+          <p>No favorites added yet.</p>
+        ) : (
+          favorites.map((favorite) => (
+            <div key={favorite.bookId._id}>
+              <img 
+                src={`http://localhost:8080/${favorite.bookId.image}`} 
+                alt={favorite.bookId.title} 
+                width={100} 
+                height={150} 
+                onError={(e) => e.target.src = '/fallback-image.jpg'} // Handle broken images
+              />
+              <h4 style={{ fontSize: '20px' }}>{favorite.bookId.title}</h4>
+              <span className='flex-display'>
+                <button className='add-to-cart'>Add To Bag</button>
+                <FontAwesomeIcon 
+                  icon={faTrash} 
+                  onClick={() => handleRemoveFavorite(favorite.bookId._id)}
+                  style={{ cursor: 'pointer', color: 'red', marginLeft: '10px' }}
+                />
+              </span>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

@@ -15,17 +15,12 @@ const Header = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [viewProfile, setViewProfile] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [setSearchResults] = useState([]); // Fix: Removed extra 'set' from useState
+  const [searchResults,setSearchResults] = useState([]);
   const [cartItemsCount, setCartItemsCount] = useState(0);
   const [favoriteCount, setFavoriteCount] = useState(0);
 
   const navigate = useNavigate();
-  const profileBoxRef = useRef(null); // Create a ref for the profile box
-
-  const handleProfile = () => {
-    setViewProfile(!viewProfile);
-  };
-
+  const profileBoxRef = useRef(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -33,16 +28,6 @@ const Header = () => {
       console.log("Header refreshed!");
     }
   }, [location.state]);
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    setLoggedIn(false);
-    handleProfile();
-  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -60,17 +45,23 @@ const Header = () => {
           },
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          setUserProfile(data.user);
-          localStorage.setItem('userId', data.user._id);
+        const data = await response.json();
+        console.log("Profile API Response:", data);
+        console.log("Token-------", token);
+
+        if (data && data._id) {
+          setUserProfile(data);
+          localStorage.setItem("userId", data._id);
+          console.log("userId:", data._id);
           setLoggedIn(true);
         } else {
-          console.error("Profile Fetch Error:", response.statusText);
+          console.error("Profile Fetch Error: user data is missing or invalid");
+          setUserProfile(null);
           setLoggedIn(false);
         }
       } catch (error) {
         console.error("Profile Fetch Error:", error.message);
+        setUserProfile(null);
         setLoggedIn(false);
       }
     };
@@ -78,71 +69,57 @@ const Header = () => {
     fetchProfile();
   }, []);
 
+  const handleProfile = () => {
+    setViewProfile(!viewProfile);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setLoggedIn(false);
+    setUserProfile(null);
+    handleProfile();
+  };
+
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 576 || window.innerWidth <= 768);
+      setIsMobile(window.innerWidth <= 768);
     };
 
     window.addEventListener("resize", handleResize);
-
     return () => {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
 
   const handleSearch = async () => {
-    try {
-      const response = await fetch(`http://localhost:8080/api/book/search?q=${searchTerm}`);
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(data);
-        console.log(data);
-        navigate(`/details/${searchTerm}`); 
-      } else {
-        console.error('Error searching:', response.statusText);
-      }
-    } catch (error) {
-      console.error('Error searching:', error.message);
+    if (!searchTerm.trim()) {
+      console.error("Search term is empty");
+      return;
     }
-  };
-
-  const fetchCartItemsCount = async () => {
+  
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setCartItemsCount(0);
+      console.log("Searching for:", searchTerm);  // ✅ Log before API call
+  
+      const response = await fetch(`http://localhost:8080/api/book/search?q=${encodeURIComponent(searchTerm)}`);
+      
+      if (!response.ok) {
+        console.error("Error searching:", response.status, response.statusText);
         return;
       }
   
-      const response = await fetch("http://localhost:8080/api/cart/cart-items-count", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const data = await response.json();
+      console.log("Search API Response:", data);  // ✅ Log API response
   
-      if (response.ok) {
-        const data = await response.json();
-        setCartItemsCount(data.cartItemCount);
+      if (data.length > 0) {
+        setSearchResults(data);
+        navigate(`/details/${data[0].title || data[0].author}`);
       } else {
-        console.error("Cart Items Count Fetch Error:", response.statusText);
+        console.warn("No results found");
       }
     } catch (error) {
-      console.error("Cart Items Count Fetch Error:", error.message);
+      console.error("Search request failed:", error.message);
     }
   };
-
-  useEffect(() => {
-    fetchCartItemsCount();
-  }, []);
-  
-  useEffect(() => {
-    if (!loggedIn) {
-      setCartItemsCount(0);
-    } else {
-      fetchCartItemsCount();
-    }
-  }, [loggedIn]);
 
   useEffect(() => {
     const fetchFavoriteCount = async () => {
@@ -152,27 +129,75 @@ const Header = () => {
           setFavoriteCount(0);
           return;
         }
-
-        const response = await fetch("http://localhost:8080/api/book/favorite-count", {
+  
+        const response = await fetch("http://localhost:8080/favorite/favorites/count", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-
-        if (response.ok) {
-          const data = await response.json();
-          setFavoriteCount(data.favoriteCount);
+  
+        if (!response.ok) {
+          console.error("Favorite Count Fetch Error:", response.status, response.statusText);
+          return;
+        }
+  
+        const data = await response.json();
+        console.log("Favorite API Response:", data);  // ✅ Log the API response
+  
+        if (typeof data.count === "number") {
+          setFavoriteCount(data.count);  // ✅ Update the state with correct key
         } else {
-          console.error("Favorite Count Fetch Error:", response.statusText);
+          console.error("Invalid favorite count response:", data);
         }
       } catch (error) {
         console.error("Favorite Count Fetch Error:", error.message);
       }
     };
-
+  
     fetchFavoriteCount();
-  }, []);
+  }, [loggedIn]);  // ✅ Runs whenever login state changes
+  
+
+  useEffect(() => {
+    const fetchCartCount = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setCartItemsCount(0);
+          return;
+        }
+  
+        const response = await fetch("http://localhost:8080/api/cart/cart-count", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        if (!response.ok) {
+          console.error("Cart Count Fetch Error:", response.status, response.statusText);
+          return;
+        }
+  
+        const data = await response.json();
+        console.log("Cart Count API Response:", data);
+  
+        if (typeof data.cartCount === "number") {
+          setCartItemsCount(data.cartCount);
+        } else {
+          console.error("Invalid cart count response:", data);
+        }
+      } catch (error) {
+        console.error("Cart Count Fetch Error:", error.message);
+      }
+    };
+  
+    fetchCartCount();
+  }, [loggedIn]);  // Runs whenever login state changes
+  
+
+
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -182,68 +207,54 @@ const Header = () => {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [profileBoxRef]);
+  }, []);
+
+  
 
   return (
     <>
       {isMobile ? (
-        <>
-          <header>
-            <span className="head">
-              <span>
-                <FontAwesomeIcon
-                  color="black"
-                  fontSize={25}
-                  icon={faBars}
-                  onClick={toggleSidebar}
-                  style={{
-                    marginTop: "10px",
-                    padding: "5",
-                    marginLeft: "20",
-                    marginRight: "20",
-                    borderRadius: "5px",
-                  }}
-                />
-                <img src={logo} alt="logo" className="logo-img" />
-              </span>
-              <span>
-                <Link to='/favorite'> <FontAwesomeIcon icon={faHeart} className="fav" /></Link>
-                <span className="favorite-count">{favoriteCount}</span>
-                <Link to='/cart'>
-                  <FontAwesomeIcon icon={faBagShopping} className="bag" />
-                </Link>
-                {cartItemsCount > 0 && <div className="cart-items-count">{cartItemsCount}</div>}
-              </span>
+        <header>
+          <span className="head">
+            <span>
+              <FontAwesomeIcon
+                color="black"
+                fontSize={25}
+                icon={faBars}
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              />
+              <img src={logo} alt="logo" className="logo-img" />
             </span>
-            <SideBars
-              isOpen={isSidebarOpen}
-              toggleSidebar={toggleSidebar}
-              loggedIn={loggedIn}
-              handleLogout={handleLogout}
-            />
-          </header>
-          <span className="search">
-            <input
-              className="search-box"
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by Name"
-            />
-            <FontAwesomeIcon icon={faSearch} onClick={handleSearch} className="search">
-              Search
-            </FontAwesomeIcon>
+            <span>
+              <Link to='/favorite'><FontAwesomeIcon icon={faHeart} className="fav" /></Link>
+              <span className="favorite-count">{favoriteCount}</span>
+              
+              <Link to='/cart'><FontAwesomeIcon icon={faBagShopping} className="bag" /></Link>
+              {cartItemsCount > 0 && <div className="cart-items-count">{cartItemsCount}</div>}
+            </span>
           </span>
-        </>
+
+          <input type="text" 
+          className="search-box"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by Author, Name"
+          />
+          <FontAwesomeIcon icon={faSearch} onClick={handleSearch} className="search" />
+
+          <SideBars
+            isOpen={isSidebarOpen}
+            toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+            loggedIn={loggedIn}
+            handleLogout={handleLogout}
+          />
+        </header>
       ) : (
         <header className="head">
-          <Link to="/">
-            <img src={logo} width="220px" height="150px" alt="iLearn" />
-          </Link>
+          <Link to="/"><img src={logo} width="220px" height="150px" alt="iLearn" /></Link>
           <input
             className="search-box"
             type="text"
@@ -251,53 +262,33 @@ const Header = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by Author, Name"
           />
-          <FontAwesomeIcon icon={faSearch} onClick={handleSearch} className="search">
-            Search
-          </FontAwesomeIcon>
+          <FontAwesomeIcon icon={faSearch} onClick={handleSearch} className="search" />
           <div>
-            <span
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Link to='/favorite'> 
-                <FontAwesomeIcon icon={faHeart} className="fav" />
-              </Link>
+            <span style={{ display: "flex", alignItems: "center" }}>
+              <Link to='/favorite'><FontAwesomeIcon icon={faHeart} className="fav" /></Link>
               <span className="favorite-count">{favoriteCount}</span>
-              <Link to='/cart'>
-                <FontAwesomeIcon icon={faBagShopping} className="bag" />
-              </Link>
+              <Link to='/cart'><FontAwesomeIcon icon={faBagShopping} className="bag" /></Link>
               {cartItemsCount > 0 && <span className="cart-items-count">{cartItemsCount}</span>}
               <FontAwesomeIcon
                 icon={faUserCircle}
                 className="user-circle"
                 onClick={handleProfile}
-                style={{ cursor: "pointer" }}
               />
-              {viewProfile ? (
-                <div className="profile" ref={profileBoxRef}> {/* Attach the ref here */}
+              {viewProfile && (
+                <div className="profile" ref={profileBoxRef}>
                   <div className="profile-box">
-                    {loggedIn && userProfile ? (
-                      <div style={{ fontSize: "15px" }}>
-                        Welcome, <span>{userProfile.name}</span>
-                      </div>
+                    {loggedIn ? (
+                      <>
+                        <div style={{ fontSize: "15px" }}>
+                          Welcome, <span>{userProfile?.name}</span>
+                        </div>
+                        <Link to='/login' className="login-register" onClick={handleLogout}>Logout</Link>
+                      </>
                     ) : (
-                      <></>
-                    )}
-                    {loggedIn && userProfile ? (
-                      <Link to='/login' className="login-register" onClick={handleLogout}>Logout</Link>
-                    ) : (
-                      <Link to="/login" className="login-register" onClick={handleProfile}>
-                        Login/Register
-                      </Link>
+                      <Link to="/login" className="login-register" onClick={handleProfile}>Login/Register</Link>
                     )}
                   </div>
                 </div>
-              ) : (
-                <></>
               )}
             </span>
           </div>
@@ -308,3 +299,4 @@ const Header = () => {
 };
 
 export default Header;
+

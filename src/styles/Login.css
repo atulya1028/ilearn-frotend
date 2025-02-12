@@ -86,175 +86,38 @@
     border: 1px solid black;
   }
 
-  .parentDiv{
-    margin-left: 20px !important;
-    margin-right: 20px !important;
-  }
+ /* Parent container styling */
+.parentDiv {
+  border: 1px solid black !important;
+  border-radius: 5px;
+  padding: 10px;
+  margin-top: 40px !important;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 80%; /* Ensures responsiveness */
+  width: 400px; /* Default width */
+}
 
-  @media screen and (min-width:320px) {
-    .parentDiv{
-      border: 1px solid black !important;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 40px !important;
-      margin-left: 20px !important;
-      margin-right: 20px !important;
-    }
-  }
+/* Center text for .forgot-pass and .sign-up */
+.forgot-pass, .sign-up {
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  width: 100%; /* Ensures it takes full width */
+  margin-top: 10px;
+}
 
-  @media screen and (min-width:344px) {
-    .parentDiv{
-      border: 1px solid black !important;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 100px !important;
-      margin-left: 20px !important;
-      margin-right: 20px !important;
-    }
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+  .parentDiv {
+      width: 90%; /* Adjusts width for tablets */
+      max-width: 100%;
   }
+}
 
-  @media screen and (min-width:360px) {
-    .parentDiv{
-      border: 1px solid black !important;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 100px !important;
-      margin-left: 20px !important;
-      margin-right: 20px !important;
-    }
+@media screen and (max-width: 480px) {
+  .parentDiv {
+      width: 95%; /* Adjusts width for mobile screens */
+      padding: 15px;
   }
-
-  @media screen and (min-width:375px) {
-    .parentDiv{
-      border: 1px solid black !important;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 50px !important;
-      margin-left: 20px !important;
-      margin-right: 20px !important;
-    }
-  }
-  @media screen and (min-width:390px) {
-    .parentDiv{
-      border: 1px solid black !important;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 150px !important;
-      margin-left: 20px !important;
-      margin-right: 20px !important;
-    }
-  }
-  @media screen and (min-width:412px) {
-    .parentDiv{
-      border: 1px solid black !important;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 180px !important;
-      margin-left: 20px !important;
-      margin-right: 20px !important;
-    }
-  }
-
-  @media screen and (min-width:414px) {
-    .parentDiv{
-      border: 1px solid black !important;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 50px !important;
-      margin-left: 20px !important;
-      margin-right: 20px !important;
-    }
-  }
-  @media screen and (min-width:430px) {
-    .parentDiv{
-      border: 1px solid black !important;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 200px !important;
-      margin-left: 20px !important;
-      margin-right: 20px !important;
-    }
-  }
-  @media screen and (min-width:768px) {
-    .parentDiv{
-      border: 1px solid black !important;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 200px !important;
-      margin-left: 100px !important;
-      margin-right: 100px !important;
-    }
-  }
-  @media screen and (min-width:820px) {
-    .parentDiv{
-      border: 1px solid black !important;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 300px !important;
-      margin-left: 100px !important;
-      margin-right: 100px !important;
-    }
-  }
-  @media screen and (min-width:853px) {
-    .parentDiv{
-      border: 1px solid black !important;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 300px !important;
-      margin-left: 200px !important;
-      margin-right: 200px !important;
-    }
-  }
-  @media screen and (min-width:912px) {
-    .parentDiv{
-      border: 1px solid black !important;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 350px !important;
-      margin-left: 150px !important;
-      margin-right: 150px !important;
-    }
-  }
-  @media screen and (min-width:1024px) {
-    .parentDiv{
-      border: 1px solid black !important;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 100px !important;
-      margin-left: 200px !important;
-      margin-right: 200px !important;
-    }
-  }
-  @media screen and (min-width:1280px) {
-    .parentDiv{
-      border: 1px solid black !important;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 100px !important;
-      margin-left: 350px !important;
-      margin-right: 350px !important;
-    }
-  }
-  @media screen and (min-width:1440px) {
-    .parentDiv{
-      border: 1px solid black !important;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 100px !important;
-      margin-left: 500px !important;
-      margin-right: 500px !important;
-    }
-  }
-
-  @media screen and (min-width:1025px) and (max-width:1500px) {
-   .forgot-pass{
-    margin-top: 10px;
-    margin-left: 813px;
-   }
-  }
-
-  .sign-up{
-    margin-top: 20px;
-    margin-left: 580px;
-  }
-
+}
