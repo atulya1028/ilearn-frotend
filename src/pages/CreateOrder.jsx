@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLessThan } from "@fortawesome/free-solid-svg-icons";
 import { Link, useNavigate } from "react-router-dom";
 import { Footer } from "../pages/Footer";
+import Header from "./Header";
 
 export const CreateOrder = () => {
   const [formData, setFormData] = useState({
@@ -106,11 +107,12 @@ export const CreateOrder = () => {
 
   return (
     <>
-      <div className="header">
+   
+      {/* <div className="header">
         <img src={logo} alt="logo" onClick={gotoHome} className="logo-co" />
         <img src={books} alt="Book icon" height={250} className="books-co" />
-      </div>
-
+      </div> */}
+       <Header />
       <div className="flex-box">
         <div className="shipping-details">
           <h3>Shipping address</h3>
@@ -184,12 +186,15 @@ export const CreateOrder = () => {
         <div className="item-details">
           {Array.isArray(cartItems) && cartItems.length > 0 ? (
             cartItems.map((item) => (
+             <>
+             <br /> <br />
               <span key={item._id} className="book-box">
                 <img src={`http://localhost:8080/${item.book.image}`} alt="" width={100} height={100} />
                 <h5 className="text">{item.book.title}</h5>
                 <h5 className="text">₹ {item.price || 0}</h5>
 
               </span>
+             </>
             ))
           ) : (
             <p style={{ textAlign: "center" }}>No items in the cart</p>
